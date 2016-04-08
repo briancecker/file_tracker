@@ -17,6 +17,7 @@ TIME_MAP = {
     "Y": {"name": "years", "num_seconds": 60 * 60 * 24 * 7 * 52},
 }
 
+PRINTABLE_TIME_HEADER = "  Y   W   D   H   M   S"
 debug = False
 config_path = os.path.join(os.path.expanduser("~"), ".file_watcher")
 file_list = os.path.join(config_path, "file_list.json")
@@ -59,7 +60,26 @@ def get_matched_files(args):
 
 
 def get_printable_time(time_in_seconds):
-    return "printable time"
+    times = list(TIME_MAP.items())
+    times.sort(key=lambda x: x[1]["num_seconds"], reverse=True)
+    printable_time = dict()
+    for time in times:
+        printable_time[time[0]] = 0
+        while time_in_seconds != 0 and time_in_seconds % time[1]["num_seconds"] == 0:
+            printable_time[time[0]] += 1
+            time_in_seconds -= time[1]["num_seconds"]
+
+    result_str = ""
+    first = True
+    for time in times:
+        if not first:
+            result_str += " "
+        else:
+            first = False
+
+        result_str += "{:3}".format(printable_time[time[0]])
+
+    return result_str
 
 
 def add_file_to_config(config, name, time_in_seconds):
@@ -67,14 +87,13 @@ def add_file_to_config(config, name, time_in_seconds):
 
 
 def list_files(config):
-    assert("files" in config)
-
     files = list(config["files"].items())
     if len(files) == 0:
         print("There are no tracked files")
     else:
         files.sort(key=lambda tup: tup[1])
         print("Tracked files:")
+        print("\t{0}".format(PRINTABLE_TIME_HEADER))
         for tup in files:
             print("\t{0}: {1}".format(get_printable_time(tup[1]), tup[0]))
 
